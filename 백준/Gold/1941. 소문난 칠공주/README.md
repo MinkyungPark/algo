@@ -2,6 +2,79 @@
 
 [문제 링크](https://www.acmicpc.net/problem/1941) 
 
+---
+
+### 풀이
+
+- 2차원 십자 모양 경로 같은 경우는 DFS 한번으로 탐색할 수 없음
+- 1차원으로 변경해서 모든 경우가 탐색 가능하도록 해야함
+- 문제 풀이
+	- 2차원으로 dfs시 십자모양 탐색 X
+	- 1차원 리스트로 변경하고 모든 가능한 조합을 구함
+	- 조합을 구하는 과정 중 'Y'가 4개 이상이면 컷
+	- 'Y'가 3개 이하를 만족하는 7개의 조합을 구했다면 BFS로 인접한지 확인
+	- * route + [j] 대신 append/pop으로 리스트 복사 제거
+	- * sum([ ... ]) O(len(route)) 대신 y_cnt를 매개변수로 들고 다니기
+
+	```python
+	from collections import deque
+
+	batch = [input() for _ in range(5)]
+
+	def bfs(lis):
+		visited = [[1] * 5 for _ in range(5)]
+		for pos in lis[1:]:
+			x, y = pos // 5, pos % 5
+			visited[x][y] = 0
+		
+		visit_cnt = 1
+		q = deque([(lis[0] // 5, lis[0] % 5)])
+		while q:
+			x, y = q.popleft()
+			for dx, dy in zip([0, 1, -1, 0], [1, 0, 0, -1]):
+				nx, ny = x + dx, y + dy
+				if (
+					0 <= nx < 5 and 
+					0 <= ny < 5 and 
+					not visited[nx][ny]
+				):
+					q.append((nx, ny))
+					visit_cnt += 1
+					visited[nx][ny] = 1
+		
+		return visit_cnt == 7
+
+	def dfs(pos, route, y_cnt):
+		global cnt
+		# backtrack
+		if y_cnt > 3:
+			return
+		
+		# check adjacency
+		if len(route) == 7:
+			if bfs(route):
+				cnt += 1
+			return
+
+		for i in range(pos, 25):
+			route.append(i)
+			dfs(i + 1, route, y_cnt + int(batch[i // 5][i % 5] == 'Y'))
+			route.pop()
+			
+	cnt = 0
+	# combinations
+	dfs(0, [], 0)
+	print(cnt)
+	```
+
+- Advanced
+	- 푼 방법은 연결여부를 나중에 고려함 25C7(=480,700) 모든 조합을 끝까지 만든 뒤에, 매번 BFS로 연결성 검사
+	- 처음부터 '연결된 7명'만 만들도록 탐색하여 조합 공간으로 줄이기
+	- 비트마스크 + frontier 확장 (이미 선택한 칸들과 인접한 칸들만 다음 후보로 유지하면서 탐색)
+	- 여기서 쓰인 비트마스크: 원소 수가 고정되고, 집합 연산이 많이 필요한 경우, 집합 대신 표현
+
+---
+
 ### 성능 요약
 
 메모리: 110980 KB, 시간: 104 ms
