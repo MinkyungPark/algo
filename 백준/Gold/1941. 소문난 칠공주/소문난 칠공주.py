@@ -1,48 +1,43 @@
-from collections import deque
+is_Y = [0] * 25
+for i in range(5):
+    for j, p in enumerate(input()):
+        if p == 'Y':
+            is_Y[i * 5 + j] = 1
 
-batch = [input() for _ in range(5)]
+adj = [0] * 25
+for i in range(5):
+    for j in range(5):
+        pos = 5 * i + j
+        for di, dj in [(0, 1), (1, 0), (-1, 0), (0, -1)]:
+            ni, nj = i + di, j + dj
+            if (0 <= ni < 5) and (0 <= nj < 5):
+                adj[pos] |= 1 << (ni * 5 + nj)
 
-def bfs(lis):
-    visited = [[1] * 5 for _ in range(5)]
-    for pos in lis[1:]:
-        x, y = pos // 5, pos % 5
-        visited[x][y] = 0
-    
-    visit_cnt = 1
-    q = deque([(lis[0] // 5, lis[0] % 5)])
-    while q:
-        x, y = q.popleft()
-        for dx, dy in zip([0, 1, -1, 0], [1, 0, 0, -1]):
-            nx, ny = x + dx, y + dy
-            if (
-                0 <= nx < 5 and 
-                0 <= ny < 5 and 
-                not visited[nx][ny]
-            ):
-                q.append((nx, ny))
-                visit_cnt += 1
-                visited[nx][ny] = 1
-    
-    return visit_cnt == 7
 
-def dfs(pos, route, y_cnt):
-    global cnt
-    # backtrack
+def dfs(depth, last, combs, y_cnt):
+    global ans
     if y_cnt > 3:
         return
-    
-    # check adjacency
-    if len(route) == 7:
-        if bfs(route):
-            cnt += 1
+    if depth == 7:
+        ans += 1
         return
+    
+    for i in range(last):
+        cur = 1 << i
+        if cur & combs: # remove repeated combs
+            continue
+        if not adj[i] & combs: # backtrack not adj 
+            continue
+        new_combs = combs | cur
+        if new_combs not in visited:
+            visited.add(new_combs)
+            dfs(depth + 1, last, new_combs, y_cnt + is_Y[i])
 
-    for i in range(pos, 25):
-        route.append(i)
-        dfs(i + 1, route, y_cnt + int(batch[i // 5][i % 5] == 'Y'))
-        route.pop()
-        
-cnt = 0
-# combinations
-dfs(0, [], 0)
-print(cnt)
+
+visited = set() # backtrack not expand same mask
+ans = 0
+for l in range(6, 25):
+    visited.add(1 << l)
+    dfs(1, l, 1 << l, is_Y[l])
+
+print(ans)
