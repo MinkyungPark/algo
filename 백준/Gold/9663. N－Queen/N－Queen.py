@@ -1,24 +1,19 @@
 N = int(input())
 
-def dfs(r, queens):
+def dfs(r, c_mask, dl, dr):
+    # c_mask : cols prev queens attack
+    # dl, dr : col prev queen diagonal
     global cnt
     if r == N:
         cnt += 1
         return
     
-    for c in range(N):
-        check = True
-        queens[r] = c # queens (r,c)
-        for prev_r in range(r):
-            prev_c = queens[prev_r]
-            # promising
-            # 이전 퀸과 같은 r,c거나 대각선이거나
-            if prev_c == c or abs((r - prev_r) / (c - prev_c)) == 1:
-                check = False
-                break
-        if check:
-            dfs(r + 1, queens)
+    vacant = ((1 << N) - 1) & ~(c_mask | dl | dr)
+    while vacant:
+        col = vacant & -vacant
+        vacant -= col
+        dfs(r + 1, c_mask | col, (dl | col) << 1, (dr | col) >> 1)
 
 cnt = 0
-dfs(0, [0] * N)
+dfs(0, 0, 0, 0)
 print(cnt)
